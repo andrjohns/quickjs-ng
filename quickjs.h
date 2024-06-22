@@ -178,8 +178,25 @@ typedef struct JSValue {
 #define JS_VALUE_GET_FLOAT64(v) ((v).u.float64)
 #define JS_VALUE_GET_PTR(v) ((v).u.ptr)
 
+// Using compound-literals in C++ mode gives warnings under -Wpedantic
+#ifdef STRICT_R_HEADERS
+static inline JSValue JS_MKVAL(int64_t tag, int32_t val) {
+    JSValue v;
+    v.u.int32 = val;
+    v.tag = tag;
+    return v;
+}
+
+static inline JSValue JS_MKPTR(int64_t tag, void* p) {
+    JSValue v;
+    v.u.ptr = p;
+    v.tag = tag;
+    return v;
+}
+#else
 #define JS_MKVAL(tag, val) (JSValue){ (JSValueUnion){ .int32 = val }, tag }
 #define JS_MKPTR(tag, p) (JSValue){ (JSValueUnion){ .ptr = p }, tag }
+#endif
 
 #define JS_TAG_IS_FLOAT64(tag) ((unsigned)(tag) == JS_TAG_FLOAT64)
 
@@ -360,7 +377,13 @@ JS_EXTERN JSValue js_string_codePointRange(JSContext *ctx, JSValue this_val,
 
 JS_EXTERN void *js_malloc_rt(JSRuntime *rt, size_t size);
 JS_EXTERN void js_free_rt(JSRuntime *rt, void *ptr);
+// Clang-18 ubsan errors when js_realloc_rt assigned to DynBufReallocFunc type
+//  - expecting void* type for first argument
+#ifdef STRICT_R_HEADERS
+JS_EXTERN void *js_realloc_rt(void *rt, void *ptr, size_t size);
+#else
 JS_EXTERN void *js_realloc_rt(JSRuntime *rt, void *ptr, size_t size);
+#endif
 JS_EXTERN size_t js_malloc_usable_size_rt(JSRuntime *rt, const void *ptr);
 JS_EXTERN void *js_mallocz_rt(JSRuntime *rt, size_t size);
 
@@ -919,9 +942,14 @@ static inline JSValue JS_NewCFunctionMagic(JSContext *ctx, JSCFunctionMagic *fun
                                            const char *name,
                                            int length, JSCFunctionEnum cproto, int magic)
 {
+// Avoid designated-initializer warning under C++
+#ifdef STRICT_R_HEADERS
+    return JS_NewCFunction2(ctx, (JSCFunction *)func, name, length, cproto, magic);
+#else
     /* Used to squelch a -Wcast-function-type warning. */
     JSCFunctionType ft = { .generic_magic = func };
     return JS_NewCFunction2(ctx, ft.generic, name, length, cproto, magic);
+#endif
 }
 JS_EXTERN void JS_SetConstructor(JSContext *ctx, JSValue func_obj,
                                  JSValue proto);

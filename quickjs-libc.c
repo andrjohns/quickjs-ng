@@ -184,8 +184,13 @@ static JSValue js_printf_internal(JSContext *ctx,
     int64_t int64_arg;
     double double_arg;
     const char *string_arg;
+// Indirect call assigns void pointer to function pointer, gives Wpedantic warning
+#ifdef STRICT_R_HEADERS
+    int (*dbuf_printf_fun)(DynBuf *s, const char *fmt, ...) = dbuf_printf;
+#else
     /* Use indirect call to dbuf_printf to prevent gcc warning */
     int (*dbuf_printf_fun)(DynBuf *s, const char *fmt, ...) = (void*)dbuf_printf;
+#endif
 
     js_std_dbuf_init(ctx, &dbuf);
 
@@ -517,8 +522,13 @@ static JSModuleDef *js_module_loader_so(JSContext *ctx,
                                module_name, dlerror());
         goto fail;
     }
-
+// Assigning void* to JSInitModuleFunc* converts void to function pointer,
+// gives Wpedantic warning
+#ifdef STRICT_R_HEADERS
+    *(void **)(&init) = dlsym(hd, "js_init_module");
+#else
     init = dlsym(hd, "js_init_module");
+#endif
     if (!init) {
         JS_ThrowReferenceError(ctx, "could not load module filename '%s': js_init_module not found",
                                module_name);
@@ -3231,7 +3241,12 @@ typedef struct {
 
 typedef struct {
     int ref_count;
+// Size-zero arrays give Wpedantic warning, mark as extension to avoid
+#ifdef STRICT_R_HEADERS
+    __extension__ uint64_t buf[0];
+#else
     uint64_t buf[0];
+#endif
 } JSSABHeader;
 
 static JSClassID js_worker_class_id;

@@ -62,9 +62,12 @@
 #define NO_TM_GMTOFF
 #endif
 
+// Want to always disable atomics for some very old platforms
+#if defined(STRICT_R_HEADERS) && !defined(DISABLE_ATOMICS)
 #if !defined(EMSCRIPTEN) && !defined(__wasi__)
 #include "quickjs-c-atomics.h"
 #define CONFIG_ATOMICS
+#endif
 #endif
 
 // Debug trace system:
@@ -208,6 +211,32 @@ typedef enum {
     JS_GC_PHASE_DECREF,
     JS_GC_PHASE_REMOVE_CYCLES,
 } JSGCPhaseEnum;
+
+// Forward-declarations of enums gives -Wpedantic warning, so
+// include full declaration early
+#ifdef STRICT_R_HEADERS
+enum OPCodeEnum {
+#define FMT(f)
+#define DEF(id, size, n_pop, n_push, f) OP_ ## id,
+#define def(id, size, n_pop, n_push, f)
+#include "quickjs-opcode.h"
+#undef def
+#undef DEF
+#undef FMT
+    OP_COUNT, /* excluding temporary opcodes */
+    /* temporary opcodes : overlap with the short opcodes */
+    OP_TEMP_START = OP_nop + 1,
+    OP___dummy = OP_TEMP_START - 1,
+#define FMT(f)
+#define DEF(id, size, n_pop, n_push, f)
+#define def(id, size, n_pop, n_push, f) OP_ ## id,
+#include "quickjs-opcode.h"
+#undef def
+#undef DEF
+#undef FMT
+    OP_TEMP_END,
+};
+#endif
 
 typedef enum OPCodeEnum OPCodeEnum;
 
@@ -474,8 +503,14 @@ struct JSString {
     struct list_head link; /* string list */
 #endif
     union {
+// Size-zero arrays give Wpedantic warning, mark as extension to avoid
+#ifdef STRICT_R_HEADERS
+        __extension__ uint8_t str8[0]; /* 8 bit strings will get an extra null terminator */
+        __extension__ uint16_t str16[0];
+#else
         uint8_t str8[0]; /* 8 bit strings will get an extra null terminator */
         uint16_t str16[0];
+#endif
     } u;
 };
 
@@ -664,7 +699,12 @@ typedef struct JSBoundFunction {
     JSValue func_obj;
     JSValue this_val;
     int argc;
+// Size-zero arrays give Wpedantic warning, mark as extension to avoid
+#ifdef STRICT_R_HEADERS
+    __extension__ JSValue argv[0];
+#else
     JSValue argv[0];
+#endif
 } JSBoundFunction;
 
 typedef enum JSIteratorKindEnum {
@@ -822,7 +862,12 @@ typedef struct JSJobEntry {
     JSContext *ctx;
     JSJobFunc *job_func;
     int argc;
+// Size-zero arrays give Wpedantic warning, mark as extension to avoid
+#ifdef STRICT_R_HEADERS
+    __extension__ JSValue argv[0];
+#else
     JSValue argv[0];
+#endif
 } JSJobEntry;
 
 typedef struct JSProperty {
@@ -871,7 +916,12 @@ struct JSShape {
     int deleted_prop_count;
     JSShape *shape_hash_next; /* in JSRuntime.shape_hash[h] list */
     JSObject *proto;
+// Size-zero arrays give Wpedantic warning, mark as extension to avoid
+#ifdef STRICT_R_HEADERS
+    __extension__ JSShapeProperty prop[0]; /* prop_size elements */
+#else
     JSShapeProperty prop[0]; /* prop_size elements */
+#endif
 };
 
 struct JSObject {
@@ -990,6 +1040,8 @@ typedef enum OPCodeFormat {
 #undef FMT
 } OPCodeFormat;
 
+// enum defined earlier for Wpedantic compatibility
+#ifndef STRICT_R_HEADERS
 enum OPCodeEnum {
 #define FMT(f)
 #define DEF(id, size, n_pop, n_push, f) OP_ ## id,
@@ -1011,6 +1063,7 @@ enum OPCodeEnum {
 #undef FMT
     OP_TEMP_END,
 };
+#endif
 
 static int JS_InitAtoms(JSRuntime *rt);
 static JSAtom __JS_NewAtomInit(JSRuntime *rt, const char *str, int len,
@@ -1383,10 +1436,19 @@ void js_free_rt(JSRuntime *rt, void *ptr)
     rt->mf.js_free(&rt->malloc_state, ptr);
 }
 
+// Clang-18 ubsan errors when js_realloc_rt assigned to DynBufReallocFunc type
+//  - expecting void* type for first argument
+#ifdef STRICT_R_HEADERS
+void *js_realloc_rt(void *rt, void *ptr, size_t size)
+{
+    return ((JSRuntime*)rt)->mf.js_realloc(&((JSRuntime*)rt)->malloc_state, ptr, size);
+}
+#else
 void *js_realloc_rt(JSRuntime *rt, void *ptr, size_t size)
 {
     return rt->mf.js_realloc(&rt->malloc_state, ptr, size);
 }
+#endif
 
 size_t js_malloc_usable_size_rt(JSRuntime *rt, const void *ptr)
 {
@@ -5015,7 +5077,12 @@ typedef struct JSCFunctionDataRecord {
     uint8_t length;
     uint8_t data_len;
     uint16_t magic;
+// Size-zero arrays give Wpedantic warning, mark as extension to avoid
+#ifdef STRICT_R_HEADERS
+    __extension__ JSValue data[0];
+#else
     JSValue data[0];
+#endif
 } JSCFunctionDataRecord;
 
 static void js_c_function_data_finalizer(JSRuntime *rt, JSValue val)
@@ -14578,7 +14645,8 @@ static JSValue JS_CallInternal(JSContext *caller_ctx, JSValue func_obj,
 #define DUMP_BYTECODE_OR_DONT(pc)
 #endif
 
-#if !DIRECT_DISPATCH
+// GNU indirect-goto extension gives Wpedantic warning
+#if !DIRECT_DISPATCH || defined(STRICT_R_HEADERS)
 #define SWITCH(pc)      DUMP_BYTECODE_OR_DONT(pc) switch (opcode = *pc++)
 #define CASE(op)        case op
 #define DEFAULT         default
@@ -27370,7 +27438,7 @@ static int js_inner_module_evaluation(JSContext *ctx, JSModuleDef *m,
         JSReqModuleEntry *rme = &m->req_module_entries[i];
         m1 = rme->module;
         index = js_inner_module_evaluation(ctx, m1, index, pstack_top, pvalue);
-        if (index < 0) 
+        if (index < 0)
             return -1;
         assert(m1->status == JS_MODULE_STATUS_EVALUATING ||
                m1->status == JS_MODULE_STATUS_EVALUATING_ASYNC ||
@@ -31828,8 +31896,16 @@ static JSValue js_create_function(JSContext *ctx, JSFunctionDef *fd)
     if (fd->arg_count + fd->var_count > 0) {
         b->vardefs = (void *)((uint8_t*)b + vardefs_offset);
         if (fd->arg_count > 0)
+// fd->args can be NULL, resulting in nullpointer passed to memcpy and UBSAN err
+#ifdef STRICT_R_HEADERS
+            if (fd->args)
+#endif
             memcpy(b->vardefs, fd->args, fd->arg_count * sizeof(fd->args[0]));
         if (fd->var_count > 0)
+// fd->vars can be NULL, resulting in nullpointer passed to memcpy and UBSAN err
+#ifdef STRICT_R_HEADERS
+            if (fd->vars)
+#endif
             memcpy(b->vardefs + fd->arg_count, fd->vars, fd->var_count * sizeof(fd->vars[0]));
         b->var_count = fd->var_count;
         b->arg_count = fd->arg_count;

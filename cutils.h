@@ -29,6 +29,12 @@
 #include <string.h>
 #include <inttypes.h>
 
+#ifdef STRICT_R_HEADERS
+#ifdef __cplusplus
+extern "C" {
+#endif
+#endif
+
 #if defined(_WIN32)
 #include <windows.h>
 #endif
@@ -119,11 +125,14 @@ static void *__builtin_frame_address(unsigned int level) {
 
 typedef int BOOL;
 
+// Conflicts with Rboolean declaration
+#ifndef STRICT_R_HEADERS
 #ifndef FALSE
 enum {
     FALSE = 0,
     TRUE = 1,
 };
+#endif
 #endif
 
 void pstrcpy(char *buf, int buf_size, const char *str);
@@ -519,5 +528,12 @@ void js_cond_wait(js_cond_t *cond, js_mutex_t *mutex);
 int js_cond_timedwait(js_cond_t *cond, js_mutex_t *mutex, uint64_t timeout);
 
 #endif /* !defined(EMSCRIPTEN) && !defined(__wasi__) */
+
+
+#ifdef STRICT_R_HEADERS
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
+#endif
 
 #endif  /* CUTILS_H */

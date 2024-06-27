@@ -179,10 +179,6 @@ static inline __maybe_unused limb_t shld(limb_t a1, limb_t a0, long shift)
         return a1;
 }
 
-#define malloc(s) malloc_is_forbidden(s)
-#define free(p) free_is_forbidden(p)
-#define realloc(p, s) realloc_is_forbidden(p, s)
-
 void bf_context_init(bf_context_t *s, bf_realloc_func_t *realloc_func,
                      void *realloc_opaque)
 {

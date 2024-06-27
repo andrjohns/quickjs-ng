@@ -1777,10 +1777,6 @@ void JS_SetGCThreshold(JSRuntime *rt, size_t gc_threshold)
     rt->malloc_gc_threshold = gc_threshold;
 }
 
-#define malloc(s) malloc_is_forbidden(s)
-#define free(p) free_is_forbidden(p)
-#define realloc(p,s) realloc_is_forbidden(p,s)
-
 void JS_SetInterruptHandler(JSRuntime *rt, JSInterruptHandler *cb, void *opaque)
 {
     rt->interrupt_handler = cb;

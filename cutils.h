@@ -123,11 +123,13 @@ static void *__builtin_frame_address(unsigned int level) {
 
 typedef int BOOL;
 
+#ifndef STRICT_R_HEADERS
 #ifndef FALSE
 enum {
     FALSE = 0,
     TRUE = 1,
 };
+#endif
 #endif
 
 void pstrcpy(char *buf, int buf_size, const char *str);

@@ -185,7 +185,7 @@ static JSValue js_printf_internal(JSContext *ctx,
     double double_arg;
     const char *string_arg;
     /* Use indirect call to dbuf_printf to prevent gcc warning */
-    int (*dbuf_printf_fun)(DynBuf *s, const char *fmt, ...) = (void*)dbuf_printf;
+    int (*dbuf_printf_fun)(DynBuf *s, const char *fmt, ...) = dbuf_printf;
 
     js_std_dbuf_init(ctx, &dbuf);
 
@@ -518,7 +518,7 @@ static JSModuleDef *js_module_loader_so(JSContext *ctx,
         goto fail;
     }
 
-    init = dlsym(hd, "js_init_module");
+    *(void **) (&init) = dlsym(hd, "js_init_module");
     if (!init) {
         JS_ThrowReferenceError(ctx, "could not load module filename '%s': js_init_module not found",
                                module_name);

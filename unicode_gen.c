@@ -108,7 +108,7 @@ void add_char(int **pbuf, int *psize, int *plen, int c)
     if (len >= size) {
         size = *psize;
         size = max_int(len + 1, size * 3 / 2);
-        buf = realloc(buf, sizeof(buf[0]) * size);
+        buf = (int *)realloc(buf, sizeof(buf[0]) * size);
         *pbuf = buf;
         *psize = size;
     }
@@ -827,7 +827,7 @@ void parse_script_extensions(const char *filename)
             for(c = c0; c <= c1; c++) {
                 CCInfo *ci = &unicode_db[c];
                 ci->script_ext_len = script_ext_len;
-                ci->script_ext = malloc(sizeof(ci->script_ext[0]) * script_ext_len);
+                ci->script_ext = (uint8_t *)malloc(sizeof(ci->script_ext[0]) * script_ext_len);
                 for(i = 0; i < script_ext_len; i++)
                     ci->script_ext[i] = script_ext[i];
             }
@@ -2565,14 +2565,14 @@ void build_decompose_table(FILE *f)
 
     code_max = CHARCODE_MAX;
 
-    tab_de = mallocz((code_max + 2) * sizeof(*tab_de));
+    tab_de = (DecompEntry *)mallocz((code_max + 2) * sizeof(*tab_de));
 
     for(i = code_max; i >= 0; i--) {
         find_decomp_run(tab_de, i);
     }
 
     /* build the data buffer */
-    data_buf = malloc(100000);
+    data_buf = (uint8_t *)malloc(100000);
     data_len = 0;
     array_len = 0;
     for(i = 0; i <= code_max; i++) {
@@ -2666,8 +2666,8 @@ typedef struct {
 
 static int ce_cmp(const void *p1, const void *p2)
 {
-    const ComposeEntry *ce1 = p1;
-    const ComposeEntry *ce2 = p2;
+    const ComposeEntry *ce1 = (ComposeEntry *)p1;
+    const ComposeEntry *ce2 = (ComposeEntry *)p2;
     int i;
 
     for(i = 0; i < 2; i++) {
@@ -2708,7 +2708,7 @@ void build_compose_table(FILE *f, const DecompEntry *tab_de)
     int i, v, tab_ce_len;
     ComposeEntry *ce, *tab_ce;
 
-    tab_ce = malloc(sizeof(*tab_ce) * COMPOSE_LEN_MAX);
+    tab_ce = (ComposeEntry *)malloc(sizeof(*tab_ce) * COMPOSE_LEN_MAX);
     tab_ce_len = 0;
     for(i = 0; i <= CHARCODE_MAX; i++) {
         CCInfo *ci = &unicode_db[i];
@@ -2916,7 +2916,7 @@ int main(int argc, char **argv)
     if (argc >= 3)
         outfilename = argv[2];
 
-    unicode_db = mallocz(sizeof(unicode_db[0]) * (CHARCODE_MAX + 1));
+    unicode_db = (CCInfo *)mallocz(sizeof(unicode_db[0]) * (CHARCODE_MAX + 1));
 
     snprintf(filename, sizeof(filename), "%s/UnicodeData.txt", unicode_db_path);
 

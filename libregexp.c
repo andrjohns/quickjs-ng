@@ -870,6 +870,7 @@ static int re_parse_char_class(REParseState *s, const uint8_t **pp)
     CharRange cr_s, *cr = &cr_s;
     CharRange cr1_s, *cr1 = &cr1_s;
     BOOL invert;
+    const uint8_t *p0;
 
     cr_init(cr, s->opaque, lre_realloc);
     p = *pp;
@@ -912,7 +913,7 @@ static int re_parse_char_class(REParseState *s, const uint8_t **pp)
             goto invalid_class_range;
         }
         if (*p == '-' && p[1] != ']') {
-            const uint8_t *p0 = p + 1;
+            p0 = p + 1;
             if (c1 >= CLASS_RANGE_BASE) {
                 if (s->is_unicode) {
                     cr_free(cr1);
@@ -1255,6 +1256,7 @@ static int re_parse_disjunction(REParseState *s, BOOL is_backward_dir);
 static int re_parse_term(REParseState *s, BOOL is_backward_dir)
 {
     const uint8_t *p;
+    const uint8_t *q;
     int c, last_atom_start, quant_min, quant_max, last_capture_count;
     BOOL greedy, add_zero_advance_check, is_neg, is_backward_lookahead;
     CharRange cr_s, *cr = &cr_s;
@@ -1460,7 +1462,7 @@ static int re_parse_term(REParseState *s, BOOL is_backward_dir)
         case '5': case '6': case '7': case '8':
         case '9':
             {
-                const uint8_t *q = ++p;
+                q = ++p;
 
                 c = parse_digits(&p, FALSE);
                 if (c < 0 || (c >= s->capture_count && c >= re_count_captures(s))) {
@@ -1979,7 +1981,7 @@ static BOOL is_word_char(uint32_t c)
                     if (_p < _end)                                      \
                         if (is_lo_surrogate(*_p))                       \
                             c = from_surrogate(c, *_p++);               \
-            cptr = (const void *)_p;                                    \
+            cptr = (const uint8_t *)_p;                                    \
         }                                                               \
     } while (0)
 
@@ -2029,7 +2031,7 @@ static BOOL is_word_char(uint32_t c)
                     if (_p > _start)                                    \
                         if (is_hi_surrogate(_p[-1]))                    \
                             c = from_surrogate(*--_p, c);               \
-            cptr = (const void *)_p;                                    \
+            cptr = (const uint8_t *)_p;                                    \
         }                                                               \
     } while (0)
 
@@ -2045,7 +2047,7 @@ static BOOL is_word_char(uint32_t c)
                     if (_p > _start)                                    \
                         if (is_hi_surrogate(_p[-1]))                    \
                             _p--;                                       \
-            cptr = (const void *)_p;                                    \
+            cptr = (const uint8_t *)_p;                                    \
         }                                                               \
     } while (0)
 
@@ -2101,7 +2103,7 @@ static int push_state(REExecContext *s,
         new_size = s->state_stack_size * 3 / 2;
         if (new_size < 8)
             new_size = 8;
-        new_stack = lre_realloc(s->opaque, s->state_stack, new_size * s->state_size);
+        new_stack = (uint8_t *)lre_realloc(s->opaque, s->state_stack, new_size * s->state_size);
         if (!new_stack)
             return -1;
         s->state_stack_size = new_size;
@@ -2256,7 +2258,7 @@ static intptr_t lre_exec_backtrack(REExecContext *s, uint8_t **capture,
             pc += 4;
             ret = push_state(s, capture, stack, stack_len,
                              pc + (int)val, cptr,
-                             RE_EXEC_STATE_LOOKAHEAD + opcode - REOP_lookahead,
+                             (REExecStateEnum)(RE_EXEC_STATE_LOOKAHEAD + opcode - REOP_lookahead),
                              0);
             if (ret < 0)
                 return -1;
@@ -2569,7 +2571,7 @@ int lre_exec(uint8_t **capture,
     for(i = 0; i < s->capture_count * 2; i++)
         capture[i] = NULL;
     alloca_size = s->stack_size_max * sizeof(stack_buf[0]);
-    stack_buf = alloca(alloca_size);
+    stack_buf = (StackInt *)alloca(alloca_size);
     ret = lre_exec_backtrack(s, capture, stack_buf, 0, bc_buf + RE_HEADER_LEN,
                              cbuf + (cindex << cbuf_type), FALSE);
     lre_realloc(s->opaque, s->state_stack, 0);

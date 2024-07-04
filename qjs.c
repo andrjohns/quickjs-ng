@@ -52,7 +52,7 @@ static int eval_buf(JSContext *ctx, const void *buf, int buf_len,
     if ((eval_flags & JS_EVAL_TYPE_MASK) == JS_EVAL_TYPE_MODULE) {
         /* for the modules, we compile then run to be able to set
            import.meta */
-        val = JS_Eval(ctx, buf, buf_len, filename,
+        val = JS_Eval(ctx, (const char *)buf, buf_len, filename,
                       eval_flags | JS_EVAL_FLAG_COMPILE_ONLY);
         if (!JS_IsException(val)) {
             js_module_set_import_meta(ctx, val, TRUE, TRUE);
@@ -60,7 +60,7 @@ static int eval_buf(JSContext *ctx, const void *buf, int buf_len,
         }
         val = js_std_await(ctx, val);
     } else {
-        val = JS_Eval(ctx, buf, buf_len, filename, eval_flags);
+        val = JS_Eval(ctx, (const char *)buf, buf_len, filename, eval_flags);
     }
     if (JS_IsException(val)) {
         js_std_dump_error(ctx);
@@ -194,12 +194,12 @@ __attribute__((format(printf, 2, 3)))
         if (c == '%') {
             /* only handle %p and %zd */
             if (*fmt == 'p') {
-                uint8_t *ptr = va_arg(ap, void *);
+                uint8_t *ptr = (uint8_t *)va_arg(ap, void *);
                 if (ptr == NULL) {
                     printf("NULL");
                 } else {
                     printf("H%+06lld.%zd",
-                           js_trace_malloc_ptr_offset(ptr, s->opaque),
+                           js_trace_malloc_ptr_offset(ptr, (struct trace_malloc_data *)s->opaque),
                            js__malloc_usable_size(ptr));
                 }
                 fmt++;
@@ -219,7 +219,7 @@ __attribute__((format(printf, 2, 3)))
 
 static void js_trace_malloc_init(struct trace_malloc_data *s)
 {
-    free(s->base = malloc(8));
+    free(s->base = (uint8_t *)malloc(8));
 }
 
 static void *js_trace_malloc(JSMallocState *s, size_t size)
@@ -348,7 +348,7 @@ int main(int argc, char **argv)
         optind++;
         if (*arg == '-') {
             longopt = arg + 1;
-            opt_arg = strchr(longopt, '=');
+            opt_arg = (char *)strchr(longopt, '=');
             if (opt_arg)
                 *opt_arg++ = '\0';
             arg += strlen(arg);

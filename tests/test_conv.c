@@ -103,13 +103,13 @@ static inline int clz64(uint64_t a)
         return clz32((unsigned)(a >> 32));
     else
         return clz32((unsigned)a) + 32;
-#endif	
+#endif
 #else
     return __builtin_clzll(a);
 #endif
 }
 // prototypes for final functions
-extern char const digits36[36];
+extern char const digits36[37];
 size_t u32toa(char buf[minimum_length(11)], uint32_t n);
 size_t i32toa(char buf[minimum_length(12)], int32_t n);
 size_t u64toa(char buf[minimum_length(21)], uint64_t n);
@@ -129,7 +129,7 @@ size_t i64toa_radix(char buf[minimum_length(66)], int64_t n, unsigned base);
  */
 
 /* 2 <= base <= 36 */
-char const digits36[36] = "0123456789abcdefghijklmnopqrstuvwxyz";
+char const digits36[37] = "0123456789abcdefghijklmnopqrstuvwxyz";
 
 /*---- variants ----*/
 
@@ -234,7 +234,7 @@ define_i64toa(shift)
 #endif /* TEST_SHIFTBUF */
 
 #if defined(TEST_DIGIT_PAIRS) || defined(TEST_DIGIT_1PASS)
-static char const digits100[200] =
+static char const digits100[201] =
     "00010203040506070809"
     "10111213141516171819"
     "20212223242526272829"

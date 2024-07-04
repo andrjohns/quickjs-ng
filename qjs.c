@@ -348,7 +348,7 @@ int main(int argc, char **argv)
         optind++;
         if (*arg == '-') {
             longopt = arg + 1;
-            opt_arg = strchr(longopt, '=');
+            opt_arg = (char *)strchr(longopt, '=');
             if (opt_arg)
                 *opt_arg++ = '\0';
             arg += strlen(arg);

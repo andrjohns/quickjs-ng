@@ -588,7 +588,7 @@ overflow:
  */
 
 /* 2 <= base <= 36 */
-char const digits36[36] = "0123456789abcdefghijklmnopqrstuvwxyz";
+char const digits36[37] = "0123456789abcdefghijklmnopqrstuvwxyz";
 
 #define USE_SPECIAL_RADIX_10  1  // special case base 10 radix conversions
 #define USE_SINGLE_CASE_FAST  1  // special case single digit numbers

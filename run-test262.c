@@ -125,7 +125,7 @@ void perror_exit(int errcode, const char *s)
 
 char *strdup_len(const char *str, int len)
 {
-    char *p = malloc(len + 1);
+    char *p = (char *)malloc(len + 1);
     memcpy(p, str, len);
     p[len] = '\0';
     return p;
@@ -142,7 +142,7 @@ char *str_append(char **pp, const char *sep, const char *str) {
     if (p) {
         len = strlen(p) + strlen(sep);
     }
-    res = malloc(len + strlen(str) + 1);
+    res = (char *)malloc(len + strlen(str) + 1);
     if (p) {
         strcpy(res, p);
         strcat(res, sep);
@@ -201,7 +201,7 @@ char *compose_path(const char *path, const char *name)
     } else {
         path_len = strlen(path);
         name_len = strlen(name);
-        d = malloc(path_len + 1 + name_len + 1);
+        d = (char *)malloc(path_len + 1 + name_len + 1);
         if (d) {
             q = d;
             memcpy(q, path, path_len);
@@ -293,7 +293,7 @@ void namelist_add(namelist_t *lp, const char *base, const char *name)
         goto fail;
     if (lp->count == lp->size) {
         size_t newsize = lp->size + (lp->size >> 1) + 4;
-        char **a = realloc(lp->array, sizeof(lp->array[0]) * newsize);
+        char **a = (char **)realloc(lp->array, sizeof(lp->array[0]) * newsize);
         if (!a)
             goto fail;
         lp->array = a;
@@ -453,7 +453,7 @@ static struct list_head report_list = LIST_HEAD_INIT(report_list);
 
 static void *agent_start(void *arg)
 {
-    Test262Agent *agent = arg;
+    Test262Agent *agent = (Test262Agent *)arg;
     JSRuntime *rt;
     JSContext *ctx;
     JSValue ret_val;
@@ -539,7 +539,7 @@ static JSValue js_agent_start(JSContext *ctx, JSValue this_val,
     script = JS_ToCString(ctx, argv[0]);
     if (!script)
         return JS_EXCEPTION;
-    agent = malloc(sizeof(*agent));
+    agent = (Test262Agent *)malloc(sizeof(*agent));
     memset(agent, 0, sizeof(*agent));
     agent->broadcast_func = JS_UNDEFINED;
     agent->broadcast_sab = JS_UNDEFINED;
@@ -572,7 +572,7 @@ static void js_agent_free(JSContext *ctx)
 static JSValue js_agent_leaving(JSContext *ctx, JSValue this_val,
                                 int argc, JSValue *argv)
 {
-    Test262Agent *agent = JS_GetContextOpaque(ctx);
+    Test262Agent *agent = (Test262Agent *)JS_GetContextOpaque(ctx);
     if (!agent)
         return JS_ThrowTypeError(ctx, "must be called inside an agent");
     /* nothing to do */
@@ -635,7 +635,7 @@ static JSValue js_agent_broadcast(JSContext *ctx, JSValue this_val,
 static JSValue js_agent_receiveBroadcast(JSContext *ctx, JSValue this_val,
                                          int argc, JSValue *argv)
 {
-    Test262Agent *agent = JS_GetContextOpaque(ctx);
+    Test262Agent *agent = (Test262Agent *)JS_GetContextOpaque(ctx);
     if (!agent)
         return JS_ThrowTypeError(ctx, "must be called inside an agent");
     if (!JS_IsFunction(ctx, argv[0]))
@@ -701,7 +701,7 @@ static JSValue js_agent_report(JSContext *ctx, JSValue this_val,
     str = JS_ToCString(ctx, argv[0]);
     if (!str)
         return JS_EXCEPTION;
-    rep = malloc(sizeof(*rep));
+    rep = (AgentReport *)malloc(sizeof(*rep));
     rep->str = strdup(str);
     JS_FreeCString(ctx, str);
 
@@ -824,7 +824,7 @@ static JSModuleDef *js_module_loader_test(JSContext *ctx,
 
     // interpret import("bar.js") from path/to/foo.js as
     // import("path/to/bar.js") but leave import("./bar.js") untouched
-    filename = opaque;
+    filename = (char *)opaque;
     if (!strchr(module_name, '/')) {
         slash = strrchr(filename, '/');
         if (slash) {
@@ -848,7 +848,7 @@ static JSModuleDef *js_module_loader_test(JSContext *ctx,
     if (JS_IsException(func_val))
         return NULL;
     /* the module is already referenced, so we must free it */
-    m = JS_VALUE_GET_PTR(func_val);
+    m = (JSModuleDef *)JS_VALUE_GET_PTR(func_val);
     JS_FreeValue(ctx, func_val);
     return m;
 }
@@ -1434,7 +1434,7 @@ char *extract_desc(const char *buf, char style)
                 return NULL;
             }
             len = p - desc_start;
-            desc = malloc(len + 1);
+            desc = (char *)malloc(len + 1);
             memcpy(desc, desc_start, len);
             desc[len] = '\0';
             return desc;

@@ -72,7 +72,7 @@ void namelist_add(namelist_t *lp, const char *name, const char *short_name,
     if (lp->count == lp->size) {
         size_t newsize = lp->size + (lp->size >> 1) + 4;
         namelist_entry_t *a =
-            realloc(lp->array, sizeof(lp->array[0]) * newsize);
+            (namelist_entry_t *)realloc(lp->array, sizeof(lp->array[0]) * newsize);
         /* XXX: check for realloc failure */
         lp->array = a;
         lp->size = newsize;
@@ -264,7 +264,7 @@ JSModuleDef *jsc_module_loader(JSContext *ctx,
         output_object_code(ctx, outfile, func_val, cname, TRUE);
 
         /* the module is already referenced, so we must free it */
-        m = JS_VALUE_GET_PTR(func_val);
+        m = (JSModuleDef *)JS_VALUE_GET_PTR(func_val);
         JS_FreeValue(ctx, func_val);
     }
     return m;

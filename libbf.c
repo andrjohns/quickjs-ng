@@ -211,7 +211,7 @@ int bf_resize(bf_t *r, limb_t len)
     limb_t *tab;
 
     if (len != r->len) {
-        tab = bf_realloc(r->ctx, r->tab, len * sizeof(limb_t));
+        tab = (limb_t *)bf_realloc(r->ctx, r->tab, len * sizeof(limb_t));
         if (!tab && len != 0)
             return -1;
         r->tab = tab;
@@ -1372,8 +1372,8 @@ int mp_recip(bf_context_t *s, limb_t *tabr, const limb_t *taba, limb_t n)
     if (n <= 2) {
         /* return ceil(B^(2*n)/a) - 1 */
         /* XXX: could avoid allocation */
-        tabu = bf_malloc(s, sizeof(limb_t) * (2 * n + 1));
-        tabt = bf_malloc(s, sizeof(limb_t) * (n + 2));
+        tabu = (limb_t *)bf_malloc(s, sizeof(limb_t) * (2 * n + 1));
+        tabt = (limb_t *)bf_malloc(s, sizeof(limb_t) * (n + 2));
         if (!tabt || !tabu)
             goto fail;
         for(i = 0; i < 2 * n; i++)
@@ -1393,8 +1393,8 @@ int mp_recip(bf_context_t *s, limb_t *tabr, const limb_t *taba, limb_t n)
         /* n=2p  -> l=p-1, h = p + 1, k = p + 3
            n=2p+1-> l=p,  h = p + 1; k = p + 2
         */
-        tabt = bf_malloc(s, sizeof(limb_t) * (n + h + 1));
-        tabu = bf_malloc(s, sizeof(limb_t) * (n + 2 * h - l + 2));
+        tabt = (limb_t *)bf_malloc(s, sizeof(limb_t) * (n + h + 1));
+        tabu = (limb_t *)bf_malloc(s, sizeof(limb_t) * (n + 2 * h - l + 2));
         if (!tabt || !tabu)
             goto fail;
         tabxh = tabr + l;
@@ -1461,8 +1461,8 @@ static int mp_divnorm_large(bf_context_t *s,
     n = nq;
     if (nq < nb)
         n++;
-    tabb_inv = bf_malloc(s, sizeof(limb_t) * (n + 1));
-    tabt = bf_malloc(s, sizeof(limb_t) * 2 * (n + 1));
+    tabb_inv = (limb_t *)bf_malloc(s, sizeof(limb_t) * (n + 1));
+    tabt = (limb_t *)bf_malloc(s, sizeof(limb_t) * 2 * (n + 1));
     if (!tabb_inv || !tabt)
         goto fail;
 
@@ -1501,7 +1501,7 @@ static int mp_divnorm_large(bf_context_t *s,
     tabb_inv = NULL;
 
     /* R=A-B*Q */
-    tabt = bf_malloc(s, sizeof(limb_t) * (na + 1));
+    tabt = (limb_t *)bf_malloc(s, sizeof(limb_t) * (na + 1));
     if (!tabt)
         goto fail;
     if (mp_mul(s, tabt, tabq, nq + 1, tabb, nb))
@@ -1710,7 +1710,7 @@ static int __bf_div(bf_t *r, const bf_t *a, const bf_t *b, limb_t prec,
         slimb_t d;
 
         na = n + nb;
-        taba = bf_malloc(s, (na + 1) * sizeof(limb_t));
+        taba = (limb_t *)bf_malloc(s, (na + 1) * sizeof(limb_t));
         if (!taba)
             goto fail;
         d = na - a->len;
@@ -2073,7 +2073,7 @@ int mp_sqrtrem(bf_context_t *s, limb_t *tabs, limb_t *taba, limb_t n)
     if (n2 <= countof(tmp_buf1)) {
         tmp_buf = tmp_buf1;
     } else {
-        tmp_buf = bf_malloc(s, sizeof(limb_t) * n2);
+        tmp_buf = (limb_t *)bf_malloc(s, sizeof(limb_t) * n2);
         if (!tmp_buf)
             return -1;
     }
@@ -2169,7 +2169,7 @@ int bf_sqrt(bf_t *r, const bf_t *a, limb_t prec, bf_flags_t flags)
         n = (2 * (prec + 2) + 2 * LIMB_BITS - 1) / (2 * LIMB_BITS);
         if (bf_resize(r, n))
             goto fail;
-        a1 = bf_malloc(s, sizeof(limb_t) * 2 * n);
+        a1 = (limb_t *)bf_malloc(s, sizeof(limb_t) * 2 * n);
         if (!a1)
             goto fail;
         n1 = bf_min(2 * n, a->len);
@@ -2755,7 +2755,7 @@ static int bf_integer_from_radix(bf_t *r, const limb_t *tab,
 
     radixl = get_limb_radix(radix);
     pow_tab_len = ceil_log2(n) + 2; /* XXX: check */
-    pow_tab = bf_malloc(s, sizeof(pow_tab[0]) * pow_tab_len);
+    pow_tab = (bf_t *)bf_malloc(s, sizeof(pow_tab[0]) * pow_tab_len);
     if (!pow_tab)
         return -1;
     for(i = 0; i < pow_tab_len; i++)
@@ -2854,7 +2854,7 @@ static int bf_add_limb(bf_t *a, slimb_t *ppos, limb_t v)
     if (unlikely(pos < 0)) {
         limb_t new_size, d, *new_tab;
         new_size = bf_max(a->len + 1, a->len * 3 / 2);
-        new_tab = bf_realloc(a->ctx, a->tab, sizeof(limb_t) * new_size);
+        new_tab = (limb_t *)bf_realloc(a->ctx, a->tab, sizeof(limb_t) * new_size);
         if (!new_tab)
             return -1;
         a->tab = new_tab;
@@ -3481,7 +3481,7 @@ static int bf_integer_to_radix(bf_t *r, const bf_t *a, limb_t radixl)
 
     r_len = r->len;
     pow_tab_len = (ceil_log2(r_len) + 2) * 2; /* XXX: check */
-    pow_tab = bf_malloc(s, sizeof(pow_tab[0]) * pow_tab_len);
+    pow_tab = (bf_t *)bf_malloc(s, sizeof(pow_tab[0]) * pow_tab_len);
     if (!pow_tab)
         return -1;
     for(i = 0; i < pow_tab_len; i++)
@@ -3708,7 +3708,7 @@ static void output_digits(DynBuf *s, const bf_t *a1, int radix, limb_t n_digits,
 
 static void *bf_dbuf_realloc(void *opaque, void *ptr, size_t size)
 {
-    bf_context_t *s = opaque;
+    bf_context_t *s = (bf_context_t *)opaque;
     return bf_realloc(s, ptr, size);
 }
 
@@ -4586,7 +4586,7 @@ int bf_log(bf_t *r, const bf_t *a, limb_t prec, bf_flags_t flags)
 static int bf_pow_generic(bf_t *r, const bf_t *x, limb_t prec, void *opaque)
 {
     bf_context_t *s = r->ctx;
-    const bf_t *y = opaque;
+    const bf_t *y = (bf_t *)opaque;
     bf_t T_s, *T = &T_s;
     limb_t prec1;
 
@@ -4607,7 +4607,7 @@ static int bf_pow_generic(bf_t *r, const bf_t *x, limb_t prec, void *opaque)
 static int bf_pow_int(bf_t *r, const bf_t *x, limb_t prec, void *opaque)
 {
     bf_context_t *s = r->ctx;
-    const bf_t *y = opaque;
+    const bf_t *y = (bf_t *)opaque;
     bf_t T_s, *T = &T_s;
     limb_t prec1;
     int ret;
@@ -5196,7 +5196,7 @@ int bf_atan(bf_t *r, const bf_t *a, limb_t prec, bf_flags_t flags)
 static int bf_atan2_internal(bf_t *r, const bf_t *y, limb_t prec, void *opaque)
 {
     bf_context_t *s = r->ctx;
-    const bf_t *x = opaque;
+    const bf_t *x = (bf_t *)opaque;
     bf_t T_s, *T = &T_s;
     limb_t prec1;
     int ret;
@@ -5863,7 +5863,7 @@ static int mp_div_dec(bf_context_t *s, limb_t *tabq,
         if (likely(nb <= DIV_STATIC_ALLOC_LEN)) {
             tabb = static_tabb;
         } else {
-            tabb = bf_malloc(s, sizeof(limb_t) * nb);
+            tabb = (limb_t *)bf_malloc(s, sizeof(limb_t) * nb);
             if (!tabb)
                 return -1;
         }
@@ -6065,7 +6065,7 @@ int mp_sqrtrem_dec(bf_context_t *s, limb_t *tabs, limb_t *taba, limb_t n)
     if (n2 <= countof(tmp_buf1)) {
         tmp_buf = tmp_buf1;
     } else {
-        tmp_buf = bf_malloc(s, sizeof(limb_t) * n2);
+        tmp_buf = (limb_t *)bf_malloc(s, sizeof(limb_t) * n2);
         if (!tmp_buf)
             return -1;
     }
@@ -6636,7 +6636,7 @@ static int bfdec_add_internal(bfdec_t *r, const bfdec_t *a, const bfdec_t *b, li
             b1_tab = (limb_t *)b->tab;
         } else {
             b1_len = b->len + 1;
-            b1_tab = bf_malloc(s, sizeof(limb_t) * b1_len);
+            b1_tab = (limb_t *)bf_malloc(s, sizeof(limb_t) * b1_len);
             if (!b1_tab)
                 goto fail;
             b1_tab[0] = mp_shr_dec(b1_tab + 1, b->tab, b->len, b_shift, 0) *
@@ -6847,7 +6847,7 @@ static int __bfdec_div(bfdec_t *r, const bfdec_t *a, const bfdec_t *b,
         slimb_t d;
 
         na = n + nb;
-        taba = bf_malloc(r->ctx, (na + 1) * sizeof(limb_t));
+        taba = (limb_t *)bf_malloc(r->ctx, (na + 1) * sizeof(limb_t));
         if (!taba)
             goto fail;
         d = na - a->len;
@@ -7071,7 +7071,7 @@ int bfdec_sqrt(bfdec_t *r, const bfdec_t *a, limb_t prec, bf_flags_t flags)
         n = (2 * (prec1 + 2) + 2 * LIMB_DIGITS - 1) / (2 * LIMB_DIGITS);
         if (bfdec_resize(r, n))
             goto fail;
-        a1 = bf_malloc(s, sizeof(limb_t) * 2 * n);
+        a1 = (limb_t *)bf_malloc(s, sizeof(limb_t) * 2 * n);
         if (!a1)
             goto fail;
         n1 = bf_min(2 * n, a->len);
@@ -7798,9 +7798,9 @@ static no_inline NTTLimb *get_trig(BFNTTState *s,
     n2 = (limb_t)1 << (k - 1);
     m = ntt_mods[m_idx];
 #ifdef __AVX2__
-    tab = ntt_malloc(s, sizeof(NTTLimb) * n2);
+    tab = (NTTLimb *)ntt_malloc(s, sizeof(NTTLimb) * n2);
 #else
-    tab = ntt_malloc(s, sizeof(NTTLimb) * n2 * 2);
+    tab = (NTTLimb *)ntt_malloc(s, sizeof(NTTLimb) * n2 * 2);
 #endif
     if (!tab)
         return NULL;
@@ -7855,7 +7855,7 @@ static int ntt_fft_partial(BFNTTState *s, NTTLimb *buf1,
     NTTLimb *buf2, *buf3;
 
     buf2 = NULL;
-    buf3 = ntt_malloc(s, sizeof(NTTLimb) * n1);
+    buf3 = (NTTLimb *)ntt_malloc(s, sizeof(NTTLimb) * n1);
     if (!buf3)
         goto fail;
     if (k2 == 0) {
@@ -7863,7 +7863,7 @@ static int ntt_fft_partial(BFNTTState *s, NTTLimb *buf1,
             goto fail;
     } else {
         strip_len = STRIP_LEN;
-        buf2 = ntt_malloc(s, sizeof(NTTLimb) * n1 * strip_len);
+        buf2 = (NTTLimb *)ntt_malloc(s, sizeof(NTTLimb) * n1 * strip_len);
         if (!buf2)
             goto fail;
         m = ntt_mods[m_idx];
@@ -8198,9 +8198,9 @@ static int ntt_static_init(bf_context_t *s1)
     if (s1->ntt_state)
         return 0;
 #if defined(__AVX2__)
-    s = bf_aligned_malloc(s1, sizeof(*s), 64);
+    s = (BFNTTState *)bf_aligned_malloc(s1, sizeof(*s), 64);
 #else
-    s = bf_malloc(s1, sizeof(*s));
+    s = (BFNTTState *)bf_malloc(s1, sizeof(*s));
 #endif
     if (!s)
         return -1;
@@ -8339,7 +8339,7 @@ static no_inline int fft_mul(bf_context_t *s1,
         a_len = b_len;
         b_len = tmp_len;
     }
-    buf1 = ntt_malloc(s, sizeof(NTTLimb) * fft_len * nb_mods);
+    buf1 = (NTTLimb *)ntt_malloc(s, sizeof(NTTLimb) * fft_len * nb_mods);
     if (!buf1)
         return -1;
     limb_to_ntt(s, buf1, fft_len, a_tab, a_len, dpl,
@@ -8351,7 +8351,7 @@ static no_inline int fft_mul(bf_context_t *s1,
     }
     reduced_mem = (fft_len_log2 >= 14);
     if (!reduced_mem) {
-        buf2 = ntt_malloc(s, sizeof(NTTLimb) * fft_len * nb_mods);
+        buf2 = (NTTLimb *)ntt_malloc(s, sizeof(NTTLimb) * fft_len * nb_mods);
         if (!buf2)
             goto fail;
         limb_to_ntt(s, buf2, fft_len, b_tab, b_len, dpl,
@@ -8359,7 +8359,7 @@ static no_inline int fft_mul(bf_context_t *s1,
         if (!(mul_flags & FFT_MUL_R_NORESIZE))
             bf_resize(res, 0); /* in case res == b */
     } else {
-        buf2 = ntt_malloc(s, sizeof(NTTLimb) * fft_len);
+        buf2 = (NTTLimb *)ntt_malloc(s, sizeof(NTTLimb) * fft_len);
         if (!buf2)
             goto fail;
     }

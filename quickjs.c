@@ -174,7 +174,11 @@ enum {
 
 /* number of typed array types */
 #define JS_TYPED_ARRAY_COUNT  (JS_CLASS_FLOAT64_ARRAY - JS_CLASS_UINT8C_ARRAY + 1)
-static uint8_t const typed_array_size_log2[JS_TYPED_ARRAY_COUNT];
+static uint8_t const typed_array_size_log2[JS_TYPED_ARRAY_COUNT] = {
+    0, 0, 0, 1, 1, 2, 2,
+    3, 3, /* BigInt64Array, BigUint64Array */
+    2, 3
+};
 #define typed_array_size_log2(classid)  (typed_array_size_log2[(classid)- JS_CLASS_UINT8C_ARRAY])
 
 typedef enum JSErrorEnum {
@@ -1262,10 +1266,23 @@ static void js_new_callsite_data(JSContext *ctx, JSCallSiteData *csd, JSStackFra
 static void js_new_callsite_data2(JSContext *ctx, JSCallSiteData *csd, const char *filename, int line_num, int col_num);
 static void _JS_AddIntrinsicCallSite(JSContext *ctx);
 
-static const JSClassExoticMethods js_arguments_exotic_methods;
-static const JSClassExoticMethods js_string_exotic_methods;
-static const JSClassExoticMethods js_proxy_exotic_methods;
-static const JSClassExoticMethods js_module_ns_exotic_methods;
+static int js_string_get_own_property(JSContext *ctx, JSPropertyDescriptor *desc, JSValue obj, JSAtom prop);
+static int js_string_define_own_property(JSContext *ctx, JSValue this_obj, JSAtom prop, JSValue val, JSValue getter, JSValue setter, int flags);
+static int js_string_delete_property(JSContext *ctx, JSValue obj, JSAtom prop);
+static int js_arguments_define_own_property(JSContext *ctx, JSValue this_obj, JSAtom prop, JSValue val, JSValue getter, JSValue setter, int flags);
+static int js_module_ns_has(JSContext *ctx, JSValue obj, JSAtom atom);
+
+static const JSClassExoticMethods js_arguments_exotic_methods = {
+    .define_own_property = js_arguments_define_own_property,
+};
+static const JSClassExoticMethods js_string_exotic_methods = {
+    .get_own_property = js_string_get_own_property,
+    .define_own_property = js_string_define_own_property,
+    .delete_property = js_string_delete_property,
+};
+static const JSClassExoticMethods js_module_ns_exotic_methods = {
+    .has_property = js_module_ns_has,
+};
 
 static inline BOOL double_is_int32(double d)
 {
@@ -13287,9 +13304,6 @@ static int js_arguments_define_own_property(JSContext *ctx,
                              flags | JS_PROP_NO_EXOTIC);
 }
 
-static const JSClassExoticMethods js_arguments_exotic_methods = {
-    .define_own_property = js_arguments_define_own_property,
-};
 
 static JSValue js_build_arguments(JSContext *ctx, int argc, JSValue *argv)
 {
@@ -26321,10 +26335,6 @@ static int js_module_ns_has(JSContext *ctx, JSValue obj, JSAtom atom)
 {
     return (find_own_property1(JS_VALUE_GET_OBJ(obj), atom) != NULL);
 }
-
-static const JSClassExoticMethods js_module_ns_exotic_methods = {
-    .has_property = js_module_ns_has,
-};
 
 static int exported_names_cmp(const void *p1, const void *p2, void *opaque)
 {
@@ -39833,12 +39843,6 @@ static int js_string_delete_property(JSContext *ctx,
     return TRUE;
 }
 
-static const JSClassExoticMethods js_string_exotic_methods = {
-    .get_own_property = js_string_get_own_property,
-    .define_own_property = js_string_define_own_property,
-    .delete_property = js_string_delete_property,
-};
-
 static JSValue js_string_constructor(JSContext *ctx, JSValue new_target,
                                      int argc, JSValue *argv)
 {
@@ -49348,12 +49352,6 @@ void JS_AddIntrinsicBaseObjects(JSContext *ctx)
 }
 
 /* Typed Arrays */
-
-static uint8_t const typed_array_size_log2[JS_TYPED_ARRAY_COUNT] = {
-    0, 0, 0, 1, 1, 2, 2,
-    3, 3, /* BigInt64Array, BigUint64Array */
-    2, 3
-};
 
 static JSValue js_array_buffer_constructor3(JSContext *ctx,
                                             JSValue new_target,

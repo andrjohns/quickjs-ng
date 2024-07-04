@@ -1,14 +1,30 @@
 cmake_minimum_required(VERSION 3.9)
 
-project(quickjs LANGUAGES C)
+project(quickjs LANGUAGES C CXX)
 
 include(CheckCCompilerFlag)
 include(GNUInstallDirs)
 
 set(CMAKE_C_VISIBILITY_PRESET hidden)
-set(CMAKE_C_STANDARD_REQUIRED ON)
-set(CMAKE_C_EXTENSIONS ON)
-set(CMAKE_C_STANDARD 11)
+
+macro(xoption OPTION_NAME OPTION_TEXT OPTION_DEFAULT)
+    option(${OPTION_NAME} ${OPTION_TEXT} ${OPTION_DEFAULT})
+    if(DEFINED ENV{${OPTION_NAME}})
+        # Allow setting the option through an environment variable.
+        set(${OPTION_NAME} $ENV{${OPTION_NAME}})
+    endif()
+    if(${OPTION_NAME})
+        add_definitions(-D${OPTION_NAME})
+    endif()
+    message(STATUS "  ${OPTION_NAME}: ${${OPTION_NAME}}")
+endmacro()
+xoption(CONFIG_CPP "Compile as C++" OFF)
+
+if (NOT CONFIG_CPP)
+    set(CMAKE_C_STANDARD_REQUIRED ON)
+    set(CMAKE_C_EXTENSIONS ON)
+    set(CMAKE_C_STANDARD 11)
+endif()
 
 if(NOT CMAKE_BUILD_TYPE)
     message(STATUS "No build type selected, default to Release")
@@ -76,17 +92,6 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
     xcheck_add_c_compiler_flag(-fno-omit-frame-pointer)
 endif()
 
-macro(xoption OPTION_NAME OPTION_TEXT OPTION_DEFAULT)
-    option(${OPTION_NAME} ${OPTION_TEXT} ${OPTION_DEFAULT})
-    if(DEFINED ENV{${OPTION_NAME}})
-        # Allow setting the option through an environment variable.
-        set(${OPTION_NAME} $ENV{${OPTION_NAME}})
-    endif()
-    if(${OPTION_NAME})
-        add_definitions(-D${OPTION_NAME})
-    endif()
-    message(STATUS "  ${OPTION_NAME}: ${${OPTION_NAME}}")
-endmacro()
 
 xoption(BUILD_SHARED_LIBS "Build a shared library" OFF)
 if(BUILD_SHARED_LIBS)
@@ -158,6 +163,14 @@ set(qjs_sources
     libunicode.c
     quickjs.c
 )
+
+if (CONFIG_CPP)
+    file(GLOB_RECURSE CFILES "*.c")
+    set_source_files_properties(${CFILES} PROPERTIES LANGUAGE CXX)
+    add_compile_options(
+        -x c++
+    )
+endif()
 
 if(BUILD_QJS_LIBC)
     list(APPEND qjs_sources quickjs-libc.c)

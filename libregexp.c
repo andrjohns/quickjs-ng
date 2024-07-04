@@ -2256,7 +2256,7 @@ static intptr_t lre_exec_backtrack(REExecContext *s, uint8_t **capture,
             pc += 4;
             ret = push_state(s, capture, stack, stack_len,
                              pc + (int)val, cptr,
-                             RE_EXEC_STATE_LOOKAHEAD + opcode - REOP_lookahead,
+                             (REExecStateEnum)(RE_EXEC_STATE_LOOKAHEAD + opcode - REOP_lookahead),
                              0);
             if (ret < 0)
                 return -1;

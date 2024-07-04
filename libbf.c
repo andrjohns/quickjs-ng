@@ -2817,7 +2817,7 @@ int bf_mul_pow_radix(bf_t *r, const bf_t *T, limb_t radix,
             if (ret & BF_ST_MEM_ERROR)
                 break;
             if ((ret & BF_ST_INEXACT) &&
-                !bf_can_round(r, prec, flags & BF_RND_MASK, prec1) &&
+                !bf_can_round(r, prec, (bf_rnd_t)(flags & BF_RND_MASK), prec1) &&
                 !overflow) {
                 /* and more precision and retry */
                 ziv_extra_bits = ziv_extra_bits  + (ziv_extra_bits / 2);
@@ -3807,7 +3807,7 @@ static char *bf_ftoa_internal(size_t *plen, const bf_t *a2, int radix,
                     n_digits = n + prec;
                     n1 = n;
                     if (bf_convert_to_radix(a1, &n1, a, radix, n_digits,
-                                            flags & BF_RND_MASK, TRUE))
+                                            (bf_rnd_t)(flags & BF_RND_MASK), TRUE))
                         goto fail1;
                     start = s->size;
                     output_digits(s, a1, radix, n_digits, n, is_dec);
@@ -3907,7 +3907,7 @@ static char *bf_ftoa_internal(size_t *plen, const bf_t *a2, int radix,
                             while (n_digits_min < n_digits_max) {
                                 n_digits = (n_digits_min + n_digits_max) / 2;
                                 if (bf_convert_to_radix(a1, &n, a, radix, n_digits,
-                                                        flags & BF_RND_MASK, FALSE)) {
+                                                        (bf_rnd_t)(flags & BF_RND_MASK), FALSE)) {
                                     bf_delete(b);
                                     goto fail1;
                                 }
@@ -3931,7 +3931,7 @@ static char *bf_ftoa_internal(size_t *plen, const bf_t *a2, int radix,
                         }
                     }
                     if (bf_convert_to_radix(a1, &n, a, radix, n_digits,
-                                            flags & BF_RND_MASK, FALSE)) {
+                                            (bf_rnd_t)(flags & BF_RND_MASK), FALSE)) {
                     fail1:
                         bf_delete(a1);
                         goto fail;
@@ -4184,7 +4184,7 @@ static int bf_const_get(bf_t *T, limb_t prec, bf_flags_t flags,
         }
         bf_set(T, &c->val);
         T->sign = sign;
-        if (!bf_can_round(T, prec, flags & BF_RND_MASK, prec1)) {
+        if (!bf_can_round(T, prec, (bf_rnd_t)(flags & BF_RND_MASK), prec1)) {
             /* and more precision and retry */
             ziv_extra_bits = ziv_extra_bits  + (ziv_extra_bits / 2);
         } else {
@@ -4261,7 +4261,7 @@ static int bf_ziv_rounding(bf_t *r, const bf_t *a,
                 ret = 0;
                 break;
             }
-            if (bf_can_round(r, prec, rnd_mode, prec1)) {
+            if (bf_can_round(r, prec, (bf_rnd_t)rnd_mode, prec1)) {
                 ret = BF_ST_INEXACT;
                 break;
             }

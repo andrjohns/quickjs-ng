@@ -3718,6 +3718,7 @@ static char *bf_ftoa_internal(size_t *plen, const bf_t *a2, int radix,
 {
     bf_context_t *ctx = a2->ctx;
     DynBuf s_s, *s = &s_s;
+    bf_t a_s, *a = &a_s;
     int radix_bits;
 
     //    bf_print_str("ftoa", a2);
@@ -3875,8 +3876,6 @@ static char *bf_ftoa_internal(size_t *plen, const bf_t *a2, int radix,
                     }
                     n = ceil_div(a1->expn, radix_bits);
                 } else {
-                    bf_t a_s, *a = &a_s;
-
                     /* make a positive number */
                     a->tab = a2->tab;
                     a->len = a2->len;

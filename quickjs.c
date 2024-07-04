@@ -3153,6 +3153,8 @@ static JSValue JS_AtomIsNumericIndex1(JSContext *ctx, JSAtom atom)
         return JS_UNDEFINED;
     p = p1;
     len = p->len;
+    const uint8_t *r;
+    const uint8_t *r_end;
     if (p->is_wide_char) {
         const uint16_t *r = p->u.str16, *r_end = p->u.str16 + len;
         if (r >= r_end)
@@ -3176,7 +3178,8 @@ static JSValue JS_AtomIsNumericIndex1(JSContext *ctx, JSAtom atom)
                 return JS_UNDEFINED;
         }
     } else {
-        const uint8_t *r = p->u.str8, *r_end = p->u.str8 + len;
+        r = p->u.str8;
+        r_end = p->u.str8 + len;
         if (r >= r_end)
             return JS_UNDEFINED;
         c = *r;

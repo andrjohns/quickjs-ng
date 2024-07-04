@@ -870,6 +870,7 @@ static int re_parse_char_class(REParseState *s, const uint8_t **pp)
     CharRange cr_s, *cr = &cr_s;
     CharRange cr1_s, *cr1 = &cr1_s;
     BOOL invert;
+    const uint8_t *p0;
 
     cr_init(cr, s->opaque, lre_realloc);
     p = *pp;
@@ -912,7 +913,7 @@ static int re_parse_char_class(REParseState *s, const uint8_t **pp)
             goto invalid_class_range;
         }
         if (*p == '-' && p[1] != ']') {
-            const uint8_t *p0 = p + 1;
+            p0 = p + 1;
             if (c1 >= CLASS_RANGE_BASE) {
                 if (s->is_unicode) {
                     cr_free(cr1);
@@ -1255,6 +1256,7 @@ static int re_parse_disjunction(REParseState *s, BOOL is_backward_dir);
 static int re_parse_term(REParseState *s, BOOL is_backward_dir)
 {
     const uint8_t *p;
+    const uint8_t *q;
     int c, last_atom_start, quant_min, quant_max, last_capture_count;
     BOOL greedy, add_zero_advance_check, is_neg, is_backward_lookahead;
     CharRange cr_s, *cr = &cr_s;
@@ -1460,7 +1462,7 @@ static int re_parse_term(REParseState *s, BOOL is_backward_dir)
         case '5': case '6': case '7': case '8':
         case '9':
             {
-                const uint8_t *q = ++p;
+                q = ++p;
 
                 c = parse_digits(&p, FALSE);
                 if (c < 0 || (c >= s->capture_count && c >= re_count_captures(s))) {

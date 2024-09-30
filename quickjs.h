@@ -178,7 +178,11 @@ typedef struct JSValue {
 #define JS_VALUE_GET_FLOAT64(v) ((v).u.float64)
 #define JS_VALUE_GET_PTR(v) ((v).u.ptr)
 
+#if defined(__cplusplus) && defined(STRICT_R_HEADERS)
+#define JS_MKVAL(tag, val) JSValue{ { val }, tag }
+#else
 #define JS_MKVAL(tag, val) (JSValue){ (JSValueUnion){ .int32 = val }, tag }
+#endif
 #define JS_MKPTR(tag, p) (JSValue){ (JSValueUnion){ .ptr = p }, tag }
 
 #define JS_TAG_IS_FLOAT64(tag) ((unsigned)(tag) == JS_TAG_FLOAT64)
@@ -926,7 +930,12 @@ static inline JSValue JS_NewCFunctionMagic(JSContext *ctx, JSCFunctionMagic *fun
                                            int length, JSCFunctionEnum cproto, int magic)
 {
     /* Used to squelch a -Wcast-function-type warning. */
+#if defined(__cplusplus) && defined(STRICT_R_HEADERS)
+    JSCFunctionType ft;
+    ft.generic_magic = func;
+#else
     JSCFunctionType ft = { .generic_magic = func };
+#endif
     return JS_NewCFunction2(ctx, ft.generic, name, length, cproto, magic);
 }
 JS_EXTERN void JS_SetConstructor(JSContext *ctx, JSValue func_obj,

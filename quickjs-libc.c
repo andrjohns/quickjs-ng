@@ -227,10 +227,10 @@ static void js_set_thread_state(JSRuntime *rt, JSThreadState *ts)
     js_std_cmd(/*SetOpaque*/1, rt, ts);
 }
 
-#ifdef __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wformat-nonliteral"
-#endif // __GNUC__
+//#ifdef __GNUC__
+//#pragma GCC diagnostic push
+//#pragma GCC diagnostic ignored "-Wformat-nonliteral"
+//#endif // __GNUC__
 static JSValue js_printf_internal(JSContext *ctx,
                                   int argc, JSValueConst *argv, FILE *fp)
 {
@@ -446,9 +446,9 @@ fail:
     dbuf_free(&dbuf);
     return JS_EXCEPTION;
 }
-#ifdef __GNUC__
-#pragma GCC diagnostic pop // ignored "-Wformat-nonliteral"
-#endif // __GNUC__
+//#ifdef __GNUC__
+//#pragma GCC diagnostic pop // ignored "-Wformat-nonliteral"
+//#endif // __GNUC__
 
 uint8_t *js_load_file(JSContext *ctx, size_t *pbuf_len, const char *filename)
 {

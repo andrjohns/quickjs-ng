@@ -4582,22 +4582,22 @@ static void js_free_cstring(JSRuntime *rt, const void *ptr)
 
 void JS_FreeCString(JSContext *ctx, const char *ptr)
 {
-    return js_free_cstring(ctx->rt, ptr);
+    js_free_cstring(ctx->rt, ptr);
 }
 
 void JS_FreeCStringRT(JSRuntime *rt, const char *ptr)
 {
-    return js_free_cstring(rt, ptr);
+    js_free_cstring(rt, ptr);
 }
 
 void JS_FreeCStringUTF16(JSContext *ctx, const uint16_t *ptr)
 {
-    return js_free_cstring(ctx->rt, ptr);
+    js_free_cstring(ctx->rt, ptr);
 }
 
 void JS_FreeCStringRT_UTF16(JSRuntime *rt, const uint16_t *ptr)
 {
-    return js_free_cstring(rt, ptr);
+    js_free_cstring(rt, ptr);
 }
 
 static int memcmp16_8(const uint16_t *src1, const uint8_t *src2, int len)
@@ -8041,11 +8041,12 @@ static int JS_PRINTF_FORMAT_ATTR(3, 4) JS_ThrowTypeErrorOrFalse(JSContext *ctx, 
         return false;
     }
 }
-
+/*
 #if defined(__GNUC__) || defined(__clang__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wformat-nonliteral"
 #endif // __GNUC__
+*/
 static JSValue JS_ThrowTypeErrorAtom(JSContext *ctx, const char *fmt, JSAtom atom)
 {
     char buf[ATOM_GET_STR_BUF_SIZE];
@@ -8059,10 +8060,11 @@ static JSValue JS_ThrowSyntaxErrorAtom(JSContext *ctx, const char *fmt, JSAtom a
     JS_AtomGetStr(ctx, buf, sizeof(buf), atom);
     return JS_ThrowSyntaxError(ctx, fmt, buf);
 }
+/*
 #if defined(__GNUC__) || defined(__clang__)
 #pragma GCC diagnostic pop // ignored "-Wformat-nonliteral"
 #endif // __GNUC__
-
+*/
 static int JS_ThrowTypeErrorReadOnly(JSContext *ctx, int flags, JSAtom atom)
 {
     if ((flags & JS_PROP_THROW) ||

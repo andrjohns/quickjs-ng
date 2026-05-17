@@ -8043,8 +8043,8 @@ static int JS_PRINTF_FORMAT_ATTR(3, 4) JS_ThrowTypeErrorOrFalse(JSContext *ctx, 
 }
 /*
 #if defined(__GNUC__) || defined(__clang__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wformat-nonliteral"
+//#pragmaGCC diagnostic push
+//#pragmaGCC diagnostic ignored "-Wformat-nonliteral"
 #endif // __GNUC__
 */
 static JSValue JS_ThrowTypeErrorAtom(JSContext *ctx, const char *fmt, JSAtom atom)
@@ -8062,7 +8062,7 @@ static JSValue JS_ThrowSyntaxErrorAtom(JSContext *ctx, const char *fmt, JSAtom a
 }
 /*
 #if defined(__GNUC__) || defined(__clang__)
-#pragma GCC diagnostic pop // ignored "-Wformat-nonliteral"
+//#pragmaGCC diagnostic pop // ignored "-Wformat-nonliteral"
 #endif // __GNUC__
 */
 static int JS_ThrowTypeErrorReadOnly(JSContext *ctx, int flags, JSAtom atom)
